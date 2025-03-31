@@ -71,7 +71,7 @@
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background-color: #3498db;
+        background-color: #BDD971;
         color: white;
         font-size: 1.5rem;
         font-weight: bold;
@@ -84,7 +84,7 @@
         transition: background-color 0.3s ease, transform 0.2s ease;
     }
     #add-quote-btn:hover {
-        background-color: #2980b9;
+        background-color: #aec966;
         transform: scale(1.1);
     }
 
@@ -102,8 +102,7 @@
         z-index: 1000;
     }
     .login-required-modal {
-        background-color: var(--todo-bg, #fff);
-        color: var(--text-primary, #000);
+        background-color: white;
         padding: 30px;
         border-radius: 15px;
         text-align: center;
@@ -119,21 +118,22 @@
         margin-bottom: 15px;
     }
     .login-required-modal p {
-        font-weight: bold;
-        font-size: 1.5rem;
-        margin: 0;
+        margin-bottom: 25px;
+        color: #555;
+        line-height: 1.6;
+        font-size: 16px;
     }
     .login-required-modal button {
         padding: 10px 20px;
-        background-color: #3498db;
+        background-color: #BDD971;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 1rem;
     }
     .login-required-modal button:hover {
-        background-color: #2980b9;
+        background-color: #aec966;
     }
 
     .add-quote-modal-background {
@@ -259,6 +259,54 @@
     #toggle-quotes:checked ~ #next-quote-btn {
         display: inline-block; /* 유저 명언 보기 상태에서만 표시 */
     }
+
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #BDD971;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+        font-weight: bold;
+        z-index: 2000;
+        display: none;
+        animation: fadeInOut 3s ease-in-out;
+    }
+
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-10px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-10px); }
+    }
+
+    /* 새로고침 버튼 스타일 추가 */
+    #refresh-quote-btn {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #refresh-quote-btn:hover {
+        background-color: #f0f0f0;
+        transform: scale(1.1);
+    }
+
+    #refresh-quote-btn img {
+        width: 20px;
+        height: 20px;
+    }
   </style>
 </head>
 <body>
@@ -268,6 +316,9 @@
     </header>
 
     <div id="toggle-container">
+        <button id="refresh-quote-btn">
+            <img src="https://img.icons8.com/ios-glyphs/30/000000/refresh.png" alt="새로고침">
+        </button>
         <button id="next-quote-btn" style="padding: 10px 20px; font-size: 1rem; cursor: pointer;">다음 명언</button>
         <label for="toggle-quotes">유저 명언 보기</label>
         <input type="checkbox" id="toggle-quotes">
@@ -285,10 +336,13 @@
 
     <button id="add-quote-btn">+</button>
 
-    <!-- 로그아웃 모달 -->
-    <div class="login-required-modal-background" id="logout-modal">
+    <!-- 로그인 필요 모달 -->
+    <div class="login-required-modal-background" id="login-required-modal" style="display: none;">
         <div class="login-required-modal">
-            <p id="logout-modal-message">로그아웃 되었습니다.</p>
+            <h2>앗! 로그인이 필요해요</h2>
+            <p>멋진 명언을 기록하고 싶으신가봐요!<br>
+               잠깐 로그인하고 오시면 바로 시작할 수 있어요</p>
+            <button id="go-to-login" onclick="location.href='/auth'">로그인하러 가볼까요?</button>
         </div>
     </div>
 
@@ -303,39 +357,20 @@
         </div>
     </div>
 
-    <script>
-        function isSameDay(dateString) {
-            const savedDate = new Date(dateString);
-            const today = new Date();
-            return savedDate.getFullYear() === today.getFullYear() &&
-                   savedDate.getMonth() === today.getMonth() &&
-                   savedDate.getDate() === today.getDate();
-        }
+    <!-- 로그아웃 토스트 -->
+    <div id="logout-toast" class="toast">로그아웃 되었습니다</div>
 
-        async function getRandomQuote() {
+    <script>
+        async function fetchAndDisplayQuote() {
             try {
-                const savedQuote = JSON.parse(localStorage.getItem('quoteOfTheDay'));
-                if (savedQuote && isSameDay(savedQuote.date)) {
-                    document.getElementById('quote').innerText = `"${savedQuote.q}"`;
-                    document.getElementById('author').innerText = `- ${savedQuote.a}`;
-                    return;
+                const response = await fetch('/quote');
+                if (!response.ok) {
+                    throw new Error('명언을 불러오는 데 실패했습니다.');
                 }
 
-                // 서버를 통해 프록시 요청
-                const response = await fetch('http://localhost:4000/quote');
                 const data = await response.json();
-                const quote = data.q;
-                const author = data.a;
-
-                document.getElementById('quote').innerText = `"${quote}"`;
-                document.getElementById('author').innerText = `- ${author}`;
-
-                // 명언과 날짜를 localStorage에 저장
-                localStorage.setItem('quoteOfTheDay', JSON.stringify({
-                    q: quote,
-                    a: author,
-                    date: new Date().toISOString()
-                }));
+                document.getElementById('quote').innerText = `"${data.content}"`;
+                document.getElementById('author').innerText = `- ${data.author}`;
             } catch (error) {
                 console.error('❌ 명언을 불러오는 중 오류 발생:', error.message);
                 document.getElementById('quote').innerText = '명언을 불러오지 못했습니다.';
@@ -343,14 +378,45 @@
             }
         }
 
-        function showLogoutModal(message) {
-            const modalMessage = document.getElementById('logout-modal-message');
-            modalMessage.innerText = message;
-            document.getElementById('logout-modal').style.display = 'flex';
+        async function fetchAndDisplayUserQuote() {
+            try {
+                const response = await fetch('/all-quotes');
+                if (!response.ok) {
+                    throw new Error('유저 명언을 불러오는 데 실패했습니다.');
+                }
+
+                const quotes = await response.json();
+                if (quotes.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * quotes.length);
+                    const randomQuote = quotes[randomIndex];
+                    document.getElementById('quote').innerText = `"${randomQuote.content}"`;
+                    document.getElementById('author').innerText = `- ${randomQuote.author}`;
+                } else {
+                    document.getElementById('quote').innerText = '유저 명언이 없습니다.';
+                    document.getElementById('author').innerText = '';
+                }
+            } catch (error) {
+                console.error('❌ 유저 명언을 불러오는 중 오류 발생:', error.message);
+                document.getElementById('quote').innerText = '유저 명언을 불러오지 못했습니다.';
+                document.getElementById('author').innerText = '';
+            }
         }
 
-        function closeLogoutModal() {
-            document.getElementById('logout-modal').style.display = 'none';
+        function showLogoutToast() {
+            const toast = document.getElementById('logout-toast');
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+                location.reload();
+            }, 3000); // 3초 후 토스트 숨김
+        }
+
+        function showLoginRequiredModal() {
+            document.getElementById('login-required-modal').style.display = 'flex';
+        }
+
+        function closeLoginRequiredModal() {
+            document.getElementById('login-required-modal').style.display = 'none';
         }
 
         function showAddQuoteModal() {
@@ -426,8 +492,19 @@
             }
         });
 
+        document.getElementById('login-required-modal').addEventListener('click', (event) => {
+            if (event.target.id === 'login-required-modal') {
+                closeLoginRequiredModal();
+            }
+        });
+
         document.getElementById('add-quote-btn').addEventListener('click', () => {
-            showAddQuoteModal(); // 명언 추가 모달 열기
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showLoginRequiredModal(); // 로그인 필요 모달 표시
+            } else {
+                document.getElementById('add-quote-modal').style.display = 'flex'; // 명언 추가 모달 열기
+            }
         });
 
         function updateAuthButton() {
@@ -438,8 +515,7 @@
                 authButton.innerText = '로그아웃';
                 authButton.onclick = () => {
                     localStorage.removeItem('token');
-                    showLogoutModal('로그아웃 되었습니다.');
-                    setTimeout(() => location.reload(), 1500);
+                    showLogoutToast(); // 로그아웃 토스트 표시
                 };
             } else {
                 authButton.innerText = '로그인';
@@ -482,26 +558,47 @@
             }
         });
 
-        document.getElementById('toggle-quotes').addEventListener('change', (event) => {
-            const isChecked = event.target.checked;
-            const quoteContainer = document.getElementById('quote-container');
-            const allQuotesContainer = document.getElementById('all-quotes');
-            const nextQuoteButton = document.getElementById('next-quote-btn');
+        async function fetchQuoteList() {
+            try {
+                const response = await fetch('http://localhost:4000/quotes'); // 명언 리스트 API 호출
+                if (!response.ok) {
+                    throw new Error('명언 리스트를 불러오는 데 실패했습니다.');
+                }
 
-            if (isChecked) {
-                quoteContainer.style.display = 'none';
-                allQuotesContainer.style.display = 'block';
-                nextQuoteButton.style.display = 'inline-block'; // 버튼 표시
-                fetchUserQuotes(); // 유저 명언 불러오기
+                const quotes = await response.json();
+                const allQuotesContainer = document.getElementById('all-quotes');
+                allQuotesContainer.innerHTML = ''; // 기존 명언 초기화
+
+                quotes.forEach((quote) => {
+                    const quoteElement = document.createElement('div');
+                    quoteElement.className = 'quote-item';
+                    quoteElement.innerText = `"${quote.content}" - ${quote.author}`;
+                    allQuotesContainer.appendChild(quoteElement);
+                });
+            } catch (error) {
+                console.error('❌ 명언 리스트를 불러오는 중 오류 발생:', error.message);
+            }
+        }
+
+        document.getElementById('toggle-quotes').addEventListener('change', (event) => {
+            if (event.target.checked) {
+                fetchAndDisplayUserQuote(); // 유저 명언 표시
             } else {
-                quoteContainer.style.display = 'block';
-                allQuotesContainer.style.display = 'none';
-                nextQuoteButton.style.display = 'none'; // 버튼 숨김
+                fetchAndDisplayQuote(); // 기본 명언 표시
+            }
+        });
+
+        document.getElementById('refresh-quote-btn').addEventListener('click', () => {
+            const isUserQuotesChecked = document.getElementById('toggle-quotes').checked;
+            if (isUserQuotesChecked) {
+                fetchAndDisplayUserQuote(); // 유저 명언 새로고침
+            } else {
+                fetchAndDisplayQuote(); // 기본 명언 새로고침
             }
         });
 
         window.onload = () => {
-            getRandomQuote();
+            fetchAndDisplayQuote();
             updateAuthButton();
         };
     </script>    
