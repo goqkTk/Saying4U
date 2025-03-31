@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saying4U</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    header {
+        text-align: center;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+        background-color: #2c3e50;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        font-weight: 600;
+        font-size: 24px;
+        user-select: none;
+    }
+    #auth-btn {
+        font-size: 0.9rem;
+        font-weight: 600;
+        padding: 0.5rem 0.8rem;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin: 0 0.2rem;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #auth-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    #quote-container {
+        text-align: center;
+        margin-top: 50px;
+        padding: 20px;
+    }
+    #quote {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    #author {
+        font-size: 1.2rem;
+        color: #555;
+    }
+    #add-quote-btn {
+        display: block;
+        margin: 30px auto;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: bold;
+        color: white;
+        background-color: #3498db;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    #add-quote-btn:hover {
+        background-color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+    <header>
+        <div>오늘의... 명언..!!!!</div>
+        <button id="auth-btn" onclick="location.href='/auth'">로그인</button>
+    </header>
+
+    <div id="quote-container">
+        <div id="quote">명언을 불러오는 중...</div>
+        <div id="author"></div>
+        <button id="add-quote-btn" onclick="location.href='/add-quote'">명언 추가하기</button>
+    </div>
+
+    <script>
+        async function getRandomQuote() {
+            try {
+                // 서버를 통해 프록시 요청
+                const response = await fetch('http://localhost:4000/quote');
+                const data = await response.json();
+                const quote = data.q;
+                const author = data.a;
+    
+                document.getElementById('quote').innerText = `"${quote}"`;
+                document.getElementById('author').innerText = `- ${author}`;
+            } catch (error) {
+                console.error('❌ 명언을 불러오는 중 오류 발생:', error.message);
+                document.getElementById('quote').innerText = '명언을 불러오지 못했습니다.';
+                document.getElementById('author').innerText = '';
+            }
+        }
+    
+        window.onload = getRandomQuote;
+    </script>    
+</body>
+</html>
