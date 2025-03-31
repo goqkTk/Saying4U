@@ -25,6 +25,12 @@ db.serialize(() => {
         password TEXT NOT NULL,
         email TEXT NOT NULL
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS saying (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT NOT NULL,
+        author TEXT NOT NULL
+    )`);
 });
 
 app.get('/', (req, res) => {

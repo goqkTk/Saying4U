@@ -44,12 +44,16 @@
     }
 
     #quote-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         text-align: center;
-        margin-top: 50px;
         padding: 20px;
+        width: 100%;
     }
     #quote {
-        font-size: 2.5rem;
+        font-size: 4rem;
         font-weight: bold;
         margin-bottom: 20px;
     }
@@ -58,16 +62,22 @@
         color: #555;
     }
     #add-quote-btn {
-        display: block;
-        margin: 30px auto;
-        padding: 10px 20px;
-        font-size: 1rem;
-        font-weight: bold;
-        color: white;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
         background-color: #3498db;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
         border: none;
-        border-radius: 5px;
         cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
     #add-quote-btn:hover {
         background-color: #2980b9;
@@ -83,27 +93,59 @@
     <div id="quote-container">
         <div id="quote">명언을 불러오는 중...</div>
         <div id="author"></div>
-        <button id="add-quote-btn" onclick="location.href='/add-quote'">명언 추가하기</button>
     </div>
 
+    <button id="add-quote-btn">+</button>
+
     <script>
+        function isSameDay(dateString) {
+            const savedDate = new Date(dateString);
+            const today = new Date();
+            return savedDate.getFullYear() === today.getFullYear() &&
+                   savedDate.getMonth() === today.getMonth() &&
+                   savedDate.getDate() === today.getDate();
+        }
+
         async function getRandomQuote() {
             try {
+                const savedQuote = JSON.parse(localStorage.getItem('quoteOfTheDay'));
+                if (savedQuote && isSameDay(savedQuote.date)) {
+                    document.getElementById('quote').innerText = `"${savedQuote.q}"`;
+                    document.getElementById('author').innerText = `- ${savedQuote.a}`;
+                    return;
+                }
+
                 // 서버를 통해 프록시 요청
                 const response = await fetch('http://localhost:4000/quote');
                 const data = await response.json();
                 const quote = data.q;
                 const author = data.a;
-    
+
                 document.getElementById('quote').innerText = `"${quote}"`;
                 document.getElementById('author').innerText = `- ${author}`;
+
+                // 명언과 날짜를 localStorage에 저장
+                localStorage.setItem('quoteOfTheDay', JSON.stringify({
+                    q: quote,
+                    a: author,
+                    date: new Date().toISOString()
+                }));
             } catch (error) {
                 console.error('❌ 명언을 불러오는 중 오류 발생:', error.message);
                 document.getElementById('quote').innerText = '명언을 불러오지 못했습니다.';
                 document.getElementById('author').innerText = '';
             }
         }
-    
+
+        document.getElementById('add-quote-btn').addEventListener('click', () => {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn === 'true') {
+                location.href = '/add-quote';
+            } else {
+                location.href = '/auth';
+            }
+        });
+
         window.onload = getRandomQuote;
     </script>    
 </body>
