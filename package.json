@@ -17,8 +17,11 @@
     "url": "https://github.com/goqkTk/Spell-Checker/issues"
   },
   "homepage": "https://github.com/goqkTk/Spell-Checker#readme",
-  "description": "",
   "dependencies": {
-    "express": "^4.21.2"
-  }
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.0",
+    "bcrypt": "^5.1.0"
+  },
+  "devDependencies": {},
+  "description": ""
 }

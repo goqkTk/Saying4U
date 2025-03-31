@@ -115,6 +115,15 @@
             cursor: pointer;
             text-decoration: underline;
         }
+
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+            text-align: left;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -123,9 +132,11 @@
         <form id="loginForm">
             <label for="username">아이디</label>
             <input type="text" id="username" name="username" required autocomplete="off">
+            <div id="login-username-error" class="error-message"></div>
             <br>
             <label for="password">비밀번호</label>
             <input type="password" id="password" name="password" required autocomplete="off">
+            <div id="login-password-error" class="error-message"></div>
             <br>
             <button type="submit">로그인</button>
         </form>
@@ -140,12 +151,15 @@
         <form id="registerForm">
             <label for="username">아이디</label>
             <input type="text" id="username" name="username" required autocomplete="off">
+            <div id="register-username-error" class="error-message"></div>
             <br>
             <label for="email">이메일</label>
             <input type="email" id="email" name="email" required autocomplete="off">
+            <div id="register-email-error" class="error-message"></div>
             <br>
             <label for="password">비밀번호</label>
             <input type="password" id="password" name="password" required autocomplete="off">
+            <div id="register-password-error" class="error-message"></div>
             <br>
             <button type="submit">회원가입</button>
         </form>
@@ -165,6 +179,88 @@
             document.querySelector('.login-container').style.display = 'none';
             document.querySelector('.register-container').style.display = 'block';
         }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const usernameError = document.getElementById('login-username-error');
+            const passwordError = document.getElementById('login-password-error');
+
+            usernameError.style.display = 'none';
+            passwordError.style.display = 'none';
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', result.token); // JWT 토큰 저장
+                    location.href = '/';
+                } else {
+                    if (result.message.includes('아이디')) {
+                        usernameError.innerText = result.message;
+                        usernameError.style.display = 'block';
+                    } else if (result.message.includes('비밀번호')) {
+                        passwordError.innerText = result.message;
+                        passwordError.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('로그인 요청 실패:', error);
+                usernameError.innerText = '로그인 중 오류가 발생했습니다.';
+                usernameError.style.display = 'block';
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.querySelector('#registerForm #username').value;
+            const email = document.querySelector('#registerForm #email').value;
+            const password = document.querySelector('#registerForm #password').value;
+            const usernameError = document.getElementById('register-username-error');
+            const emailError = document.getElementById('register-email-error');
+            const passwordError = document.getElementById('register-password-error');
+
+            usernameError.style.display = 'none';
+            emailError.style.display = 'none';
+            passwordError.style.display = 'none';
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showLogin();
+                } else {
+                    if (result.message.includes('아이디')) {
+                        usernameError.innerText = result.message;
+                        usernameError.style.display = 'block';
+                    } else if (result.message.includes('이메일')) {
+                        emailError.innerText = result.message;
+                        emailError.style.display = 'block';
+                    } else if (result.message.includes('비밀번호')) {
+                        passwordError.innerText = result.message;
+                        passwordError.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('회원가입 요청 실패:', error);
+                usernameError.innerText = '회원가입 중 오류가 발생했습니다.';
+                usernameError.style.display = 'block';
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        document.getElementById('registerForm').addEventListener('submit', handleRegister);
     </script>
 </body>
 </html>
