@@ -274,6 +274,7 @@
         z-index: 2000;
         display: none;
         animation: fadeInOut 3s ease-in-out;
+        user-select: none;
     }
 
     @keyframes fadeInOut {
@@ -312,7 +313,10 @@
 <body>
     <header>
         <div>오늘의... 명언..!!!!</div>
-        <button id="auth-btn" onclick="location.href='/auth'">로그인</button>
+        <div style="display: flex; gap: 10px;">
+            <button id="my-quotes-btn" style="font-size: 0.9rem; font-weight: 600; padding: 0.5rem 0.8rem; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 4px; cursor: pointer;">내 명언</button>
+            <button id="auth-btn" onclick="location.href='/auth'">로그인</button>
+        </div>
     </header>
 
     <div id="toggle-container">
@@ -360,15 +364,21 @@
     <!-- 로그아웃 토스트 -->
     <div id="logout-toast" class="toast">로그아웃 되었습니다</div>
 
+    <!-- 에러 메시지 토스트 -->
+    <div id="error-toast" class="toast" style="background-color: #e74c3c; display: none;">에러 메시지</div>
+
     <script>
+        let currentQuoteContent = ''; // 현재 표시된 명언 내용 저장
+
         async function fetchAndDisplayQuote() {
             try {
-                const response = await fetch('/quote');
+                const response = await fetch(`/quote?exclude=${encodeURIComponent(currentQuoteContent)}`);
                 if (!response.ok) {
                     throw new Error('명언을 불러오는 데 실패했습니다.');
                 }
 
                 const data = await response.json();
+                currentQuoteContent = data.content; // 새 명언 내용 저장
                 document.getElementById('quote').innerText = `"${data.content}"`;
                 document.getElementById('author').innerText = `- ${data.author}`;
             } catch (error) {
@@ -449,16 +459,25 @@
             }
         }
 
+        function showErrorToast(message) {
+            const toast = document.getElementById('error-toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000); // 3초 후 토스트 숨김
+        }
+
         async function submitQuote() {
             const quote = document.getElementById('quote-input').value.trim();
             if (!quote) {
-                alert('명언을 입력해주세요.'); // 입력값이 없을 경우 경고 메시지
+                showErrorToast('명언을 입력해주세요.'); // 입력값이 없을 경우 에러 메시지 토스트 표시
                 return;
             }
 
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('로그인이 필요합니다.'); // 토큰이 없을 경우 경고 메시지
+                showErrorToast('로그인이 필요합니다.'); // 토큰이 없을 경우 에러 메시지 토스트 표시
                 return;
             }
 
@@ -477,11 +496,12 @@
                     closeAddQuoteModal(); // 모달 닫기
                     fetchUserQuotes(); // 유저 명언 목록 갱신
                 } else {
-                    alert('명언 추가 중 오류가 발생했습니다.');
+                    const result = await response.json();
+                    showErrorToast(result.message || '명언 추가 중 오류가 발생했습니다.');
                 }
             } catch (error) {
                 console.error('명언 추가 요청 실패:', error);
-                alert('명언 추가 중 오류가 발생했습니다.');
+                showErrorToast('명언 추가 중 오류가 발생했습니다.');
             }
         }
 
@@ -595,6 +615,23 @@
             } else {
                 fetchAndDisplayQuote(); // 기본 명언 새로고침
             }
+        });
+
+        document.getElementById('my-quotes-btn').addEventListener('click', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('login-required-modal').style.display = 'flex'; // 로그인 필요 모달 표시
+            } else {
+                location.href = '/my-quotes'; // 내 명언 페이지로 이동
+            }
+        });
+
+        document.getElementById('my-quotes-btn').addEventListener('mouseover', () => {
+            document.getElementById('my-quotes-btn').style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+        });
+
+        document.getElementById('my-quotes-btn').addEventListener('mouseout', () => {
+            document.getElementById('my-quotes-btn').style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
         });
 
         window.onload = () => {

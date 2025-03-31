@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 명언</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .quote-item {
+            background-color: #fff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .quote-content {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .quote-actions button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background-color: #BDD971;
+            color: white;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>내 명언</h1>
+    <div id="my-quotes-container"></div>
+    <script>
+        async function fetchMyQuotes() {
+            try {
+                const response = await fetch('/api/my-quotes', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (!response.ok) throw new Error('내 명언을 불러오는 데 실패했습니다.');
+
+                const quotes = await response.json();
+                const container = document.getElementById('my-quotes-container');
+                container.innerHTML = '';
+                quotes.forEach(quote => {
+                    const quoteElement = document.createElement('div');
+                    quoteElement.className = 'quote-item';
+                    quoteElement.innerHTML = `
+                        <div class="quote-content">"${quote.content}" - ${quote.author}</div>
+                        <div class="quote-actions">
+                            <button class="edit-btn" onclick="editQuote(${quote.id}, '${quote.content}')">수정</button>
+                            <button class="delete-btn" onclick="deleteQuote(${quote.id})">삭제</button>
+                        </div>
+                    `;
+                    container.appendChild(quoteElement);
+                });
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        async function editQuote(id, currentContent) {
+            const newContent = prompt('명언을 수정하세요:', currentContent);
+            if (!newContent) return;
+
+            try {
+                const response = await fetch(`/my-quotes/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+                if (!response.ok) throw new Error('명언 수정에 실패했습니다.');
+                fetchMyQuotes();
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        async function deleteQuote(id) {
+            if (!confirm('정말로 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/my-quotes/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (!response.ok) throw new Error('명언 삭제에 실패했습니다.');
+                fetchMyQuotes();
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        window.onload = fetchMyQuotes;
+    </script>
+</body>
+</html>
