@@ -10,6 +10,7 @@
       margin: 0;
       padding: 0;
       background-color: #f4f4f4;
+      overflow-x: hidden; /* 가로 스크롤바 방지 */
     }
     header {
         text-align: center;
@@ -51,6 +52,8 @@
         text-align: center;
         padding: 20px;
         width: 100%;
+        max-width: 90%; /* 화면 너비를 초과하지 않도록 제한 */
+        word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
     }
     #quote {
         font-size: 4rem;
@@ -149,7 +152,7 @@
     .add-quote-modal {
         background-color: var(--todo-bg, #fff);
         color: var(--text-primary, #000);
-        padding: 30px;
+        padding: 40px 30px;
         border-radius: 15px;
         text-align: center;
         max-width: 80%;
@@ -157,12 +160,13 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         animation: modalFadeIn 0.3s ease-out;
         user-select: none;
+        position: relative;
     }
     .add-quote-modal h2 {
         margin-top: 0;
         color: #BDD971;
         font-size: 24px;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
     .add-quote-modal p {
         margin-bottom: 25px;
@@ -170,19 +174,90 @@
         line-height: 1.6;
         font-size: 16px;
     }
-    .add-quote-modal button {
-        padding: 10px 20px;
+    .add-quote-modal textarea {
+        width: 100%;
+        height: 120px;
+        padding: 12px -27px 12px 12px;
+        font-size: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        resize: none;
+        outline: none;
+        transition: border-color 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .add-quote-modal textarea:focus {
+        border-color: #BDD971;
+        box-shadow: 0 0 0 3px rgba(189, 217, 113, 0.3);
+    }
+    .add-quote-modal .buttons {
+        position: relative;
+        text-align: center;
+    }
+    .add-quote-modal .buttons .confirm-btn {
         background-color: #BDD971;
         color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+        padding: 12px 30px;
         font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
         transition: background-color 0.3s ease, transform 0.2s ease;
     }
-    .add-quote-modal button:hover {
+    .add-quote-modal .buttons .confirm-btn:hover {
         background-color: #aec966;
         transform: scale(1.05);
+    }
+
+    #all-quotes {
+        position: absolute; /* 화면 중앙 정렬을 위해 추가 */
+        top: 50%; /* 세로 중앙 정렬 */
+        left: 50%; /* 가로 중앙 정렬 */
+        transform: translate(-50%, -50%); /* 중앙 정렬 보정 */
+        text-align: center;
+        font-size: 4rem; /* 기본 명언과 동일한 크기 */
+        font-weight: bold; /* 기본 명언과 동일한 굵기 */
+        color: #555; /* 기본 명언과 동일한 색상 */
+        max-width: 90%; /* 화면 너비를 초과하지 않도록 제한 */
+        word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
+    }
+    .quote-item {
+        margin-top: 20px; /* 기본 명언과 동일한 간격 */
+        font-size: 1.2rem; /* 기본 명언의 저자 크기와 동일 */
+        color: #777; /* 기본 명언 저자 색상과 동일 */
+    }
+
+    #toggle-container {
+        position: fixed; /* 고정 위치로 변경 */
+        top: 80px; /* 메뉴바 아래로 위치 조정 */
+        right: 20px; /* 오른쪽 여백 추가 */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #fff; /* 배경 추가 */
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        user-select: none;
+    }
+    #toggle-container label {
+        font-size: 1rem;
+        color: #2c3e50;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    #toggle-container input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    #next-quote-btn {
+        display: none; /* 기본적으로 숨김 */
+    }
+
+    #toggle-quotes:checked ~ #next-quote-btn {
+        display: inline-block; /* 유저 명언 보기 상태에서만 표시 */
     }
   </style>
 </head>
@@ -192,9 +267,20 @@
         <button id="auth-btn" onclick="location.href='/auth'">로그인</button>
     </header>
 
+    <div id="toggle-container">
+        <button id="next-quote-btn" style="padding: 10px 20px; font-size: 1rem; cursor: pointer;">다음 명언</button>
+        <label for="toggle-quotes">유저 명언 보기</label>
+        <input type="checkbox" id="toggle-quotes">
+    </div>
+
     <div id="quote-container">
         <div id="quote">명언을 불러오는 중...</div>
         <div id="author"></div>
+    </div>
+
+    <div id="all-quotes" style="display: none;">
+        <div id="user-quote" style="font-size: 4rem; font-weight: bold; margin-bottom: 20px; color: #000;">유저 명언을 불러오는 중...</div>
+        <div id="user-author" style="font-size: 1.2rem; color: #777;"></div>
     </div>
 
     <button id="add-quote-btn">+</button>
@@ -209,10 +295,11 @@
     <!-- 명언 추가 모달 -->
     <div class="add-quote-modal-background" id="add-quote-modal">
         <div class="add-quote-modal">
-            <h2>앗! 로그인이 필요해요</h2>
-            <p>멋진 명언을 등록하고 싶으신가봐요!<br>
-               잠깐 로그인하고 오시면 바로 시작할 수 있어요</p>
-            <button id="go-to-login" onclick="closeAddQuoteModalAndRedirect()">로그인하러 가볼까요?</button>
+            <h2>명언 추가하기</h2>
+            <textarea id="quote-input" placeholder="명언을 입력하세요..."></textarea>
+            <div class="buttons">
+                <button class="confirm-btn" onclick="submitQuote()">확인</button>
+            </div>
         </div>
     </div>
 
@@ -270,16 +357,77 @@
             document.getElementById('add-quote-modal').style.display = 'flex';
         }
 
-        function closeAddQuoteModalAndRedirect() {
+        function closeAddQuoteModal() {
             document.getElementById('add-quote-modal').style.display = 'none';
-            location.href = '/auth';
+        }
+
+        async function fetchAllQuotes() {
+            try {
+                const response = await fetch('http://localhost:4000/all-quotes'); // URL 수정
+                if (!response.ok) {
+                    throw new Error('명언 목록을 불러오는 데 실패했습니다.');
+                }
+
+                const quotes = await response.json();
+                const allQuotesContainer = document.getElementById('all-quotes');
+                allQuotesContainer.innerHTML = ''; // 기존 명언 초기화
+
+                quotes.forEach((quote) => {
+                    const quoteElement = document.createElement('div');
+                    quoteElement.className = 'quote-item';
+                    quoteElement.innerText = `"${quote.content}" - ${quote.author}`;
+                    allQuotesContainer.appendChild(quoteElement);
+                });
+            } catch (error) {
+                console.error('❌ 명언 목록을 불러오는 중 오류 발생:', error.message);
+            }
+        }
+
+        async function submitQuote() {
+            const quote = document.getElementById('quote-input').value.trim();
+            if (!quote) {
+                alert('명언을 입력해주세요.'); // 입력값이 없을 경우 경고 메시지
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('로그인이 필요합니다.'); // 토큰이 없을 경우 경고 메시지
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:4000/add-quote', { // URL 수정
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content: quote })
+                });
+
+                if (response.ok) {
+                    document.getElementById('quote-input').value = ''; // 입력 필드 초기화
+                    closeAddQuoteModal(); // 모달 닫기
+                    fetchUserQuotes(); // 유저 명언 목록 갱신
+                } else {
+                    alert('명언 추가 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('명언 추가 요청 실패:', error);
+                alert('명언 추가 중 오류가 발생했습니다.');
+            }
         }
 
         // 배경 클릭 시 모달 닫기
         document.getElementById('add-quote-modal').addEventListener('click', (event) => {
             if (event.target.id === 'add-quote-modal') {
-                document.getElementById('add-quote-modal').style.display = 'none';
+                closeAddQuoteModal();
             }
+        });
+
+        document.getElementById('add-quote-btn').addEventListener('click', () => {
+            showAddQuoteModal(); // 명언 추가 모달 열기
         });
 
         function updateAuthButton() {
@@ -299,12 +447,56 @@
             }
         }
 
-        document.getElementById('add-quote-btn').addEventListener('click', () => {
-            const token = localStorage.getItem('token'); // JWT 토큰 확인
-            if (token) {
-                location.href = '/add-quote';
+        let userQuotes = [];
+        let currentQuoteIndex = 0;
+
+        async function fetchUserQuotes() {
+            try {
+                const response = await fetch('http://localhost:4000/all-quotes');
+                if (!response.ok) {
+                    throw new Error('유저 명언 목록을 불러오는 데 실패했습니다.');
+                }
+
+                userQuotes = await response.json();
+                if (userQuotes.length > 0) {
+                    displayUserQuote(0); // 첫 번째 명언 표시
+                } else {
+                    document.getElementById('user-quote').innerText = '유저 명언이 없습니다.';
+                    document.getElementById('user-author').innerText = '';
+                }
+            } catch (error) {
+                console.error('❌ 유저 명언 목록을 불러오는 중 오류 발생:', error.message);
+            }
+        }
+
+        function displayUserQuote(index) {
+            const quote = userQuotes[index];
+            document.getElementById('user-quote').innerText = `"${quote.content}"`;
+            document.getElementById('user-author').innerText = `- ${quote.author}`;
+        }
+
+        document.getElementById('next-quote-btn').addEventListener('click', () => {
+            if (userQuotes.length > 0) {
+                currentQuoteIndex = (currentQuoteIndex + 1) % userQuotes.length; // 다음 명언으로 이동
+                displayUserQuote(currentQuoteIndex);
+            }
+        });
+
+        document.getElementById('toggle-quotes').addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+            const quoteContainer = document.getElementById('quote-container');
+            const allQuotesContainer = document.getElementById('all-quotes');
+            const nextQuoteButton = document.getElementById('next-quote-btn');
+
+            if (isChecked) {
+                quoteContainer.style.display = 'none';
+                allQuotesContainer.style.display = 'block';
+                nextQuoteButton.style.display = 'inline-block'; // 버튼 표시
+                fetchUserQuotes(); // 유저 명언 불러오기
             } else {
-                showAddQuoteModal();
+                quoteContainer.style.display = 'block';
+                allQuotesContainer.style.display = 'none';
+                nextQuoteButton.style.display = 'none'; // 버튼 숨김
             }
         });
 

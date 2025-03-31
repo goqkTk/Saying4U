@@ -134,3 +134,36 @@ function authenticateToken(req, res, next) {
 app.get('/protected', authenticateToken, (req, res) => {
     res.status(200).json({ message: `안녕하세요, ${req.user.username}님!` });
 });
+
+// 모든 명언 가져오기 API
+app.get('/all-quotes', (req, res) => {
+    db.all(`SELECT content, author FROM saying`, [], (err, rows) => {
+        if (err) {
+            console.error('명언 목록 조회 실패:', err.message);
+            return res.status(500).json({ message: '명언 목록을 불러오는 데 실패했습니다.' });
+        }
+        res.status(200).json(rows);
+    });
+});
+
+// 명언 추가 API
+app.post('/add-quote', authenticateToken, (req, res) => {
+    const { content } = req.body;
+    const author = req.user.username; // 토큰에서 가져온 사용자 이름을 작성자로 설정
+
+    if (!content) {
+        return res.status(400).json({ message: '명언 내용을 입력해주세요.' });
+    }
+
+    db.run(
+        `INSERT INTO saying (content, author) VALUES (?, ?)`,
+        [content, author],
+        (err) => {
+            if (err) {
+                console.error('명언 추가 실패:', err.message);
+                return res.status(500).json({ message: '명언 추가 중 오류가 발생했습니다.' });
+            }
+            res.status(201).json({ message: '명언이 성공적으로 추가되었습니다.' });
+        }
+    );
+});
