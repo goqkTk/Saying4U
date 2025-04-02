@@ -4,7 +4,7 @@ const path = require('path');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const sayings = require('./sayings'); // sayings 파일에서 데이터 가져오기
+const sayings = require('./sayings');
 const app = express();
 app.use(express.json());
 const PORT = 4000;
@@ -70,7 +70,6 @@ app.get('/quote', (req, res) => {
         [exclude],
         (err, row) => {
             if (err) {
-                console.error('명언 조회 실패:', err.message);
                 return res.status(500).json({ error: '명언을 불러오는 데 실패했습니다.' });
             }
             if (!row) {
@@ -81,11 +80,10 @@ app.get('/quote', (req, res) => {
     );
 });
 
-// 다수의 명언 가져오기 API
+// 내 명언 페이지
 app.get('/quotes', (req, res) => {
     db.all(`SELECT content, author FROM saying ORDER BY RANDOM() LIMIT 5`, [], (err, rows) => {
         if (err) {
-            console.error('명언 리스트 조회 실패:', err.message);
             return res.status(500).json({ error: '명언 리스트를 불러오는 데 실패했습니다.' });
         }
         if (!rows || rows.length === 0) {
@@ -112,14 +110,12 @@ app.post('/register', async (req, res) => {
             [username, hashedPassword, email],
             (err) => {
                 if (err) {
-                    console.error('회원가입 실패:', err.message);
                     return res.status(500).json({ message: '회원가입 중 오류가 발생했습니다.' });
                 }
                 res.status(201).json({ message: '회원가입 성공!' });
             }
         );
     } catch (error) {
-        console.error('회원가입 처리 실패:', error.message);
         res.status(500).json({ message: '회원가입 중 오류가 발생했습니다.' });
     }
 });
@@ -137,17 +133,18 @@ app.post('/login', (req, res) => {
         [username],
         async (err, user) => {
             if (err) {
-                console.error('로그인 실패:', err.message);
                 return res.status(500).json({ message: '로그인 중 오류가 발생했습니다.' });
             }
 
             if (!user) {
-                return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+                // 상태 코드를 200으로 설정하고 메시지만 반환
+                return res.status(200).json({ message: '사용자를 찾을 수 없습니다.' });
             }
 
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
-                return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
+                // 상태 코드를 200으로 설정하고 메시지만 반환
+                return res.status(200).json({ message: '비밀번호가 일치하지 않습니다.' });
             }
 
             const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
@@ -168,16 +165,10 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// 보호된 API 예시
-app.get('/protected', authenticateToken, (req, res) => {
-    res.status(200).json({ message: `안녕하세요, ${req.user.username}님!` });
-});
-
 // 모든 명언 가져오기 API
 app.get('/all-quotes', (req, res) => {
     db.all(`SELECT content, author FROM user_saying`, [], (err, rows) => {
         if (err) {
-            console.error('유저 명언 목록 조회 실패:', err.message);
             return res.status(500).json({ message: '유저 명언 목록을 불러오는 데 실패했습니다.' });
         }
         res.status(200).json(rows); // 유저 명언 리스트 반환
@@ -198,7 +189,6 @@ app.post('/add-quote', authenticateToken, (req, res) => {
         [content, author],
         (err) => {
             if (err) {
-                console.error('명언 추가 실패:', err.message);
                 return res.status(500).json({ message: '명언 추가 중 오류가 발생했습니다.' });
             }
             res.status(201).json({ message: '명언이 성공적으로 추가되었습니다.' });
@@ -216,7 +206,6 @@ app.get('/api/my-quotes', authenticateToken, (req, res) => {
     const username = req.user.username;
     db.all(`SELECT id, content, author FROM user_saying WHERE author = ?`, [username], (err, rows) => {
         if (err) {
-            console.error('내 명언 조회 실패:', err.message);
             return res.status(500).json({ message: '내 명언을 불러오는 데 실패했습니다.' });
         }
         res.status(200).json(rows);
@@ -238,7 +227,6 @@ app.put('/my-quotes/:id', authenticateToken, (req, res) => {
         [content, id, username],
         function (err) {
             if (err) {
-                console.error('명언 수정 실패:', err.message);
                 return res.status(500).json({ message: '명언 수정 중 오류가 발생했습니다.' });
             }
             if (this.changes === 0) {
@@ -259,7 +247,6 @@ app.delete('/my-quotes/:id', authenticateToken, (req, res) => {
         [id, username],
         function (err) {
             if (err) {
-                console.error('명언 삭제 실패:', err.message);
                 return res.status(500).json({ message: '명언 삭제 중 오류가 발생했습니다.' });
             }
             if (this.changes === 0) {
