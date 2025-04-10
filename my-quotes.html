@@ -2,47 +2,126 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 명언</title>
     <style>
+        :root {
+            --container-padding: 20px;
+            --quote-padding: 15px;
+            --quote-margin: 10px;
+            --button-padding: 5px 10px;
+            --font-size-h1: 2rem;
+            --font-size-quote: 1rem;
+            --border-radius: 8px;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: var(--container-padding);
             background-color: #f4f4f4;
         }
+
         h1 {
             text-align: center;
             color: #2c3e50;
+            font-size: var(--font-size-h1);
+            margin-bottom: 30px;
         }
+
+        #my-quotes-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
         .quote-item {
             background-color: #fff;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
+            padding: var(--quote-padding);
+            margin: var(--quote-margin) 0;
+            border-radius: var(--border-radius);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
+
         .quote-content {
             flex: 1;
             margin-right: 10px;
+            font-size: var(--font-size-quote);
+            min-width: 200px;
         }
+
+        .quote-actions {
+            display: flex;
+            gap: 5px;
+        }
+
         .quote-actions button {
-            margin-left: 5px;
-            padding: 5px 10px;
+            padding: var(--button-padding);
             border: none;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             cursor: pointer;
+            font-size: var(--font-size-quote);
+            white-space: nowrap;
         }
+
         .edit-btn {
             background-color: #BDD971;
             color: white;
         }
+
         .delete-btn {
             background-color: #e74c3c;
             color: white;
+        }
+
+        /* 반응형 미디어 쿼리 */
+        @media screen and (max-width: 768px) {
+            :root {
+                --container-padding: 15px;
+                --quote-padding: 12px;
+                --quote-margin: 8px;
+                --button-padding: 4px 8px;
+                --font-size-h1: 1.8rem;
+                --font-size-quote: 0.95rem;
+            }
+
+            .quote-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .quote-content {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .quote-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            :root {
+                --container-padding: 10px;
+                --quote-padding: 10px;
+                --quote-margin: 6px;
+                --button-padding: 3px 6px;
+                --font-size-h1: 1.6rem;
+                --font-size-quote: 0.9rem;
+            }
+
+            h1 {
+                margin-bottom: 20px;
+            }
+
+            .quote-content {
+                min-width: 0;
+            }
         }
     </style>
 </head>
@@ -52,30 +131,52 @@
     <script>
         async function fetchMyQuotes() {
             try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    location.href = '/auth';
+                    return;
+                }
+
                 const response = await fetch('/api/my-quotes', {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
-                if (!response.ok) throw new Error('내 명언을 불러오는 데 실패했습니다.');
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        location.href = '/auth';
+                        return;
+                    }
+                    throw new Error('내 명언을 불러오는 데 실패했습니다.');
+                }
 
                 const quotes = await response.json();
                 const container = document.getElementById('my-quotes-container');
                 container.innerHTML = '';
+                
+                if (quotes.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666;">아직 저장된 명언이 없습니다.</p>';
+                    return;
+                }
+
                 quotes.forEach(quote => {
                     const quoteElement = document.createElement('div');
                     quoteElement.className = 'quote-item';
                     quoteElement.innerHTML = `
                         <div class="quote-content">"${quote.content}" - ${quote.author}</div>
                         <div class="quote-actions">
-                            <button class="edit-btn" onclick="editQuote(${quote.id}, '${quote.content}')">수정</button>
+                            <button class="edit-btn" onclick="editQuote(${quote.id}, '${quote.content.replace(/'/g, "\\'")}')">수정</button>
                             <button class="delete-btn" onclick="deleteQuote(${quote.id})">삭제</button>
                         </div>
                     `;
                     container.appendChild(quoteElement);
                 });
             } catch (error) {
-                console.error(error.message);
+                console.error('내 명언 불러오기 오류:', error);
+                const container = document.getElementById('my-quotes-container');
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c;">명언을 불러오는 중 오류가 발생했습니다.</p>';
             }
         }
 
@@ -84,18 +185,33 @@
             if (!newContent) return;
 
             try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    location.href = '/auth';
+                    return;
+                }
+
                 const response = await fetch(`/my-quotes/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ content: newContent })
                 });
-                if (!response.ok) throw new Error('명언 수정에 실패했습니다.');
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        location.href = '/auth';
+                        return;
+                    }
+                    throw new Error('명언 수정에 실패했습니다.');
+                }
                 fetchMyQuotes();
             } catch (error) {
-                console.error(error.message);
+                console.error('명언 수정 오류:', error);
+                alert('명언 수정 중 오류가 발생했습니다.');
             }
         }
 
@@ -103,16 +219,31 @@
             if (!confirm('정말로 삭제하시겠습니까?')) return;
 
             try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    location.href = '/auth';
+                    return;
+                }
+
                 const response = await fetch(`/my-quotes/${id}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
-                if (!response.ok) throw new Error('명언 삭제에 실패했습니다.');
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        location.href = '/auth';
+                        return;
+                    }
+                    throw new Error('명언 삭제에 실패했습니다.');
+                }
                 fetchMyQuotes();
             } catch (error) {
-                console.error(error.message);
+                console.error('명언 삭제 오류:', error);
+                alert('명언 삭제 중 오류가 발생했습니다.');
             }
         }
 

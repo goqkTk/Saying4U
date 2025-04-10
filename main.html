@@ -2,9 +2,16 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Saying4U</title>
   <style>
+    :root {
+      --header-height: 60px;
+      --quote-font-size: 4rem;
+      --author-font-size: 1.2rem;
+      --button-size: 60px;
+    }
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -14,7 +21,7 @@
     }
     header {
         text-align: center;
-        padding: 20px;
+        padding: 10px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -25,8 +32,9 @@
         top: 0;
         z-index: 100;
         font-weight: 600;
-        font-size: 24px;
+        font-size: 20px;
         user-select: none;
+        height: var(--header-height);
     }
     #auth-btn {
         font-size: 0.9rem;
@@ -56,20 +64,20 @@
         word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
     }
     #quote {
-        font-size: 4rem;
+        font-size: var(--quote-font-size);
         font-weight: bold;
         margin-bottom: 20px;
     }
     #author {
-        font-size: 1.2rem;
+        font-size: var(--author-font-size);
         color: #555;
     }
     #add-quote-btn {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        width: 60px;
-        height: 60px;
+        width: var(--button-size);
+        height: var(--button-size);
         border-radius: 50%;
         background-color: #BDD971;
         color: white;
@@ -103,34 +111,34 @@
     }
     .login-required-modal {
         background-color: white;
-        padding: 30px;
-        border-radius: 15px;
+        padding: var(--modal-padding, 30px);
+        border-radius: var(--modal-border-radius, 15px);
         text-align: center;
-        max-width: 80%;
-        width: 350px;
+        max-width: 90%;
+        width: var(--modal-width, 350px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         animation: modalFadeIn 0.3s ease-out;
     }
     .login-required-modal h2 {
         margin-top: 0;
         color: #BDD971;
-        font-size: 24px;
-        margin-bottom: 15px;
+        font-size: var(--modal-title-size, 24px);
+        margin-bottom: var(--modal-title-margin, 15px);
     }
     .login-required-modal p {
-        margin-bottom: 25px;
+        margin-bottom: var(--modal-text-margin, 25px);
         color: #555;
         line-height: 1.6;
-        font-size: 16px;
+        font-size: var(--modal-text-size, 16px);
     }
     .login-required-modal button {
-        padding: 10px 20px;
+        padding: var(--modal-button-padding, 10px 20px);
         background-color: #BDD971;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: var(--modal-button-radius, 8px);
         cursor: pointer;
-        font-size: 1rem;
+        font-size: var(--modal-button-size, 1rem);
     }
     .login-required-modal button:hover {
         background-color: #aec966;
@@ -152,11 +160,11 @@
     .add-quote-modal {
         background-color: var(--todo-bg, #fff);
         color: var(--text-primary, #000);
-        padding: 40px 30px;
-        border-radius: 15px;
+        padding: var(--modal-padding, 40px 30px);
+        border-radius: var(--modal-border-radius, 15px);
         text-align: center;
-        max-width: 80%;
-        width: 350px;
+        max-width: 90%;
+        width: var(--modal-width, 350px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         animation: modalFadeIn 0.3s ease-out;
         user-select: none;
@@ -165,26 +173,26 @@
     .add-quote-modal h2 {
         margin-top: 0;
         color: #BDD971;
-        font-size: 24px;
-        margin-bottom: 20px;
+        font-size: var(--modal-title-size, 24px);
+        margin-bottom: var(--modal-title-margin, 20px);
     }
     .add-quote-modal p {
-        margin-bottom: 25px;
+        margin-bottom: var(--modal-text-margin, 25px);
         color: #555;
         line-height: 1.6;
-        font-size: 16px;
+        font-size: var(--modal-text-size, 16px);
     }
     .add-quote-modal textarea {
         width: 100%;
-        height: 120px;
-        padding: 12px -27px 12px 12px;
-        font-size: 1rem;
+        height: var(--modal-textarea-height, 120px);
+        padding: var(--modal-textarea-padding, 12px);
+        font-size: var(--modal-textarea-size, 1rem);
         border: 2px solid #e2e8f0;
-        border-radius: 8px;
+        border-radius: var(--modal-textarea-radius, 8px);
         resize: none;
         outline: none;
         transition: border-color 0.3s ease;
-        margin-bottom: 20px;
+        margin-bottom: var(--modal-textarea-margin, 20px);
     }
     .add-quote-modal textarea:focus {
         border-color: #BDD971;
@@ -197,10 +205,10 @@
     .add-quote-modal .buttons .confirm-btn {
         background-color: #BDD971;
         color: white;
-        padding: 12px 30px;
-        font-size: 1rem;
+        padding: var(--modal-button-padding, 12px 30px);
+        font-size: var(--modal-button-size, 1rem);
         border: none;
-        border-radius: 8px;
+        border-radius: var(--modal-button-radius, 8px);
         cursor: pointer;
         transition: background-color 0.3s ease, transform 0.2s ease;
     }
@@ -228,13 +236,13 @@
     }
 
     #toggle-container {
-        position: fixed; /* 고정 위치로 변경 */
-        top: 80px; /* 메뉴바 아래로 위치 조정 */
-        right: 20px; /* 오른쪽 여백 추가 */
+        position: fixed;
+        top: calc(var(--header-height) + 20px);
+        right: 20px;
         display: flex;
         align-items: center;
         gap: 10px;
-        background-color: #fff; /* 배경 추가 */
+        background-color: #fff;
         padding: 10px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -307,6 +315,93 @@
     #refresh-quote-btn img {
         width: 20px;
         height: 20px;
+    }
+
+    /* 반응형 미디어 쿼리 */
+    @media screen and (max-width: 768px) {
+        :root {
+            --modal-padding: 25px;
+            --modal-width: 320px;
+            --modal-title-size: 22px;
+            --modal-text-size: 15px;
+            --modal-button-padding: 8px 16px;
+            --modal-textarea-height: 100px;
+            --modal-textarea-padding: 10px;
+            --modal-textarea-size: 0.95rem;
+        }
+
+        .login-required-modal,
+        .add-quote-modal {
+            padding: var(--modal-padding);
+        }
+
+        .login-required-modal h2,
+        .add-quote-modal h2 {
+            font-size: var(--modal-title-size);
+            margin-bottom: 15px;
+        }
+
+        .login-required-modal p,
+        .add-quote-modal p {
+            font-size: var(--modal-text-size);
+            margin-bottom: 20px;
+        }
+
+        .login-required-modal button,
+        .add-quote-modal .buttons .confirm-btn {
+            padding: var(--modal-button-padding);
+            font-size: var(--modal-text-size);
+        }
+
+        .add-quote-modal textarea {
+            height: var(--modal-textarea-height);
+            padding: var(--modal-textarea-padding);
+            font-size: var(--modal-textarea-size);
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        :root {
+            --modal-padding: 20px;
+            --modal-width: 280px;
+            --modal-title-size: 20px;
+            --modal-text-size: 14px;
+            --modal-button-padding: 6px 12px;
+            --modal-textarea-height: 80px;
+            --modal-textarea-padding: 8px;
+            --modal-textarea-size: 0.9rem;
+        }
+
+        .login-required-modal,
+        .add-quote-modal {
+            padding: var(--modal-padding);
+            width: var(--modal-width);
+        }
+
+        .login-required-modal h2,
+        .add-quote-modal h2 {
+            font-size: var(--modal-title-size);
+            margin-bottom: 12px;
+        }
+
+        .login-required-modal p,
+        .add-quote-modal p {
+            font-size: var(--modal-text-size);
+            margin-bottom: 15px;
+        }
+
+        .login-required-modal button,
+        .add-quote-modal .buttons .confirm-btn {
+            padding: var(--modal-button-padding);
+            font-size: var(--modal-text-size);
+        }
+
+        .add-quote-modal textarea {
+            height: var(--modal-textarea-height);
+            padding: var(--modal-textarea-padding);
+            font-size: var(--modal-textarea-size);
+            margin-bottom: 15px;
+        }
     }
   </style>
 </head>
@@ -471,18 +566,18 @@
         async function submitQuote() {
             const quote = document.getElementById('quote-input').value.trim();
             if (!quote) {
-                showErrorToast('명언을 입력해주세요.'); // 입력값이 없을 경우 에러 메시지 토스트 표시
+                showErrorToast('명언을 입력해주세요.');
                 return;
             }
 
             const token = localStorage.getItem('token');
             if (!token) {
-                showErrorToast('로그인이 필요합니다.'); // 토큰이 없을 경우 에러 메시지 토스트 표시
+                showErrorToast('로그인이 필요합니다.');
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:4000/add-quote', { // URL 수정
+                const response = await fetch('/add-quote', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -492,15 +587,15 @@
                 });
 
                 if (response.ok) {
-                    document.getElementById('quote-input').value = ''; // 입력 필드 초기화
-                    closeAddQuoteModal(); // 모달 닫기
-                    fetchUserQuotes(); // 유저 명언 목록 갱신
+                    document.getElementById('quote-input').value = '';
+                    closeAddQuoteModal();
+                    fetchUserQuotes();
                 } else {
                     const result = await response.json();
                     showErrorToast(result.message || '명언 추가 중 오류가 발생했습니다.');
                 }
             } catch (error) {
-                console.error('명언 추가 요청 실패:', error);
+                console.error('명언 추가 오류:', error);
                 showErrorToast('명언 추가 중 오류가 발생했습니다.');
             }
         }
@@ -548,20 +643,22 @@
 
         async function fetchUserQuotes() {
             try {
-                const response = await fetch('http://localhost:4000/all-quotes');
+                const response = await fetch('/all-quotes');
                 if (!response.ok) {
                     throw new Error('유저 명언 목록을 불러오는 데 실패했습니다.');
                 }
 
                 userQuotes = await response.json();
                 if (userQuotes.length > 0) {
-                    displayUserQuote(0); // 첫 번째 명언 표시
+                    displayUserQuote(0);
                 } else {
                     document.getElementById('user-quote').innerText = '유저 명언이 없습니다.';
                     document.getElementById('user-author').innerText = '';
                 }
             } catch (error) {
-                console.error('❌ 유저 명언 목록을 불러오는 중 오류 발생:', error.message);
+                console.error('유저 명언 목록 오류:', error);
+                document.getElementById('user-quote').innerText = '유저 명언을 불러오지 못했습니다.';
+                document.getElementById('user-author').innerText = '';
             }
         }
 
