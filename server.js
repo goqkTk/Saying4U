@@ -1,7 +1,6 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const sayings = require('./sayings');
@@ -9,8 +8,8 @@ const app = express();
 app.use(express.json());
 const PORT = 4000;
 
-app.listen(PORT, () => {
-    console.log(`서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`서버가 http://0.0.0.0:${PORT} 에서 실행 중입니다.`);
 });
 
 // SQLite3 데이터베이스 연결
@@ -165,7 +164,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// 모든 명언 가져오기 API
+// 유저 명언 가져오기 API
 app.get('/all-quotes', (req, res) => {
     db.all(`SELECT content, author FROM user_saying`, [], (err, rows) => {
         if (err) {
